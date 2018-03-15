@@ -735,7 +735,23 @@ public class Main extends Script
                      {
     	                 try 
     	                 {
-	                         last = ((next = bufferedreader.readLine()) == null);
+                                try {
+                                    last = ((next = bufferedreader.readLine()) == null);
+                                } catch (IOException ioEx) {
+/*
+                                    This IOException added due to getting Error EOFException and in this next and last variables 
+                                    were not initialized due to error. And it was going into infinite loop. 
+                                    As this process in hang state, a subsequent process was not kicking off and no more data were
+                                    receiving. Also, Error log was getting full as with the loop it was logging same errors in each
+                                    loop.
+
+                                    In this setting next to 'null' and last to 'true' to come out of the loop gracefully. 
+*/
+                                    ew.synchronizedLog(EventWriter.ERROR, "Exception processing line: " + line + ": " + ioEx.toString());
+                                    ew.synchronizedLog(EventWriter.INFO, "Number of lines processed befor IOException : " + numLines);
+                                    next = null;
+                                    last = true;
+                                }
 
 	                         if (last) 
 	                         {
