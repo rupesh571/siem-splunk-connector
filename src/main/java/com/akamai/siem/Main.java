@@ -772,44 +772,47 @@ public class Main extends Script
 	        	                 String newOffset = "";
 	        	                 if("Bad offset, expired data requested".equalsIgnoreCase(line) == false)
 	        	                 {
-	        	                	 JsonObject jo = parser.parse(line).getAsJsonObject();
-	        	                     newOffset = jo.get("offset").getAsString();                     
+                                             JsonObject jo = parser.parse(line).getAsJsonObject();
+                                             if(jo.get("offset") != null){  // In IOException, this value will be null so no new offset value
+                                                newOffset = jo.get("offset").getAsString();
+                                             }
 	        	                 }
 	        	                 
 	        	                 ew.synchronizedLog(EventWriter.INFO, "offset=\"" + newOffset + "\"");
-	        	                 
-	        	                 Gson gson = new Gson();
-	        	                 if(kvStoreStanza != null)
-	        	                 {
-	        	                	 kvStoreStanza.offset = newOffset;
-	        	                	 kvStoreStanza.error_count = 0;
-	        	                	 kvStoreStanza.stanza_change = false;
-	        	                	 
-	        	                	 ew.synchronizedLog(EventWriter.INFO, "kvStoreStanza=\"" + gson.toJson(kvStoreStanza) + "\"");
-	        	                     
-	        	                     RequestMessage requestMessage = new RequestMessage("POST");
-	        	                     requestMessage.getHeader().put("Content-Type",  "application/json");
-	        	                     requestMessage.setContent(gson.toJson(kvStoreStanza));
-	        	                     
-	        	                     ResponseMessage rm2 = splunkService.send(String.format("/servicesNS/nobody/TA-Akamai_SIEM/storage/collections/data/akamai_state/%s", kvStoreStanza._key), requestMessage);
-	        	                     ew.synchronizedLog(EventWriter.DEBUG, String.valueOf(rm2.getStatus()));
-	        	                 }
-	        	                 else
-	        	                 {
-	        	                	 
-	        	                	 kvStoreStanza = new stanza_state();
-	        	                	 kvStoreStanza.offset = newOffset;
-	        	                	 kvStoreStanza.stanza = inputName;
-	        	                	 
-	        	                	 ew.synchronizedLog(EventWriter.INFO, "kvStoreStanza=\"" + gson.toJson(kvStoreStanza) + "\"");
-	        	                                        
-	        	                     RequestMessage requestMessage = new RequestMessage("POST");
-	        	                     requestMessage.getHeader().put("Content-Type",  "application/json");
-	        	                     requestMessage.setContent(gson.toJson(kvStoreStanza));
-	        	                     
-	        	                     ResponseMessage rm2 = splunkService.send("/servicesNS/nobody/TA-Akamai_SIEM/storage/collections/data/akamai_state/", requestMessage);
-	        	                     ew.synchronizedLog(EventWriter.DEBUG, String.valueOf(rm2.getStatus()));
-	        	                 }
+	        	                 if("".equals(newOffset) == false){ // In case of IOException no update required
+                                                Gson gson = new Gson();
+                                                if(kvStoreStanza != null)
+                                                {
+                                                        kvStoreStanza.offset = newOffset;
+                                                        kvStoreStanza.error_count = 0;
+                                                        kvStoreStanza.stanza_change = false;
+
+                                                        ew.synchronizedLog(EventWriter.INFO, "kvStoreStanza=\"" + gson.toJson(kvStoreStanza) + "\"");
+
+                                                    RequestMessage requestMessage = new RequestMessage("POST");
+                                                    requestMessage.getHeader().put("Content-Type",  "application/json");
+                                                    requestMessage.setContent(gson.toJson(kvStoreStanza));
+
+                                                    ResponseMessage rm2 = splunkService.send(String.format("/servicesNS/nobody/TA-Akamai_SIEM/storage/collections/data/akamai_state/%s", kvStoreStanza._key), requestMessage);
+                                                    ew.synchronizedLog(EventWriter.DEBUG, String.valueOf(rm2.getStatus()));
+                                                }
+                                                else
+                                                {
+
+                                                        kvStoreStanza = new stanza_state();
+                                                        kvStoreStanza.offset = newOffset;
+                                                        kvStoreStanza.stanza = inputName;
+
+                                                        ew.synchronizedLog(EventWriter.INFO, "kvStoreStanza=\"" + gson.toJson(kvStoreStanza) + "\"");
+
+                                                    RequestMessage requestMessage = new RequestMessage("POST");
+                                                    requestMessage.getHeader().put("Content-Type",  "application/json");
+                                                    requestMessage.setContent(gson.toJson(kvStoreStanza));
+
+                                                    ResponseMessage rm2 = splunkService.send("/servicesNS/nobody/TA-Akamai_SIEM/storage/collections/data/akamai_state/", requestMessage);
+                                                    ew.synchronizedLog(EventWriter.DEBUG, String.valueOf(rm2.getStatus()));
+                                                }
+                                         }
 	                         } 
 	                         else 
 	                         {
